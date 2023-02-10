@@ -78,10 +78,15 @@ end
 
 
 %% compute RMSE
-if exist('U', 'var') && size(U,2) == pY
+if exist('U', 'var')
     % compute R2
     Vc = Y';
     Vm = Vm';
+
+    % shrink R2 if not shrunk
+    if length(size(U)) == 3
+        U = arrayShrink(U, squeeze(isnan(U(:,:,1))));
+    end
 
     covVc = cov(Vc');  % S x S
     covVm = cov(Vm');  % S x S
