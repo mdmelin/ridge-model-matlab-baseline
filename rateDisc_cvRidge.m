@@ -83,7 +83,7 @@ if exist('U', 'var')
     Vc = Y';
     Vm = Vm';
 
-    % shrink R2 if not shrunk
+    % shrink U if not shrunk
     if length(size(U)) == 3
         U = arrayShrink(U, squeeze(isnan(U(:,:,1))));
     end
