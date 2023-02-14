@@ -72,6 +72,11 @@ for iFolds = 1:ridgeFolds
     Vm(~dataIdx,:) = (X(~dataIdx,:) * betas); %predict remaining data
 end
 
+% Sum of squared residuals
+SSR = sum((Y - Vm).^2);
+% R squared
+TSS = sum(((Y - mean(Y)).^2));
+cvLoss = mean(1 - SSR./TSS);
 
 %% compute cMap and R2
 if exist('U', 'var')
@@ -94,8 +99,4 @@ if exist('U', 'var')
     cMap = gather((covP ./ stdPxPy)');
 end
 
-% Sum of squared residuals
-SSR = sum((Y - Vm).^2);
-% R squared
-TSS = sum(((Y - mean(Y)).^2));
-cvLoss = mean(1 - SSR./TSS);
+
