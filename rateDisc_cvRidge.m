@@ -33,8 +33,6 @@ ep = eye(p);
 YMean = mean(Y, 1);
 Y = bsxfun(@minus, Y, YMean);
 
-orgX = X;
-
 XStd = std(X, 0, 1);
 X = bsxfun(@rdivide, X, XStd);
 XMean = mean(X, 1);
@@ -70,14 +68,12 @@ for iFolds = 1:ridgeFolds
         end
     end
 
-    % Adjust betas to account for renorming.
-    betas = bsxfun(@rdivide, betas, XStd');
     betas(isnan(betas)) = 0;
-    Vm(~dataIdx,:) = (orgX(~dataIdx,:) * betas); %predict remaining data
+    Vm(~dataIdx,:) = (X(~dataIdx,:) * betas); %predict remaining data
 end
 
 
-%% compute RMSE
+%% compute cMap and R2
 if exist('U', 'var')
     % compute R2
     Vc = Y';
@@ -96,16 +92,10 @@ if exist('U', 'var')
     varP2 = sum((U * covVm) .* U, 2)';  % 1 x P
     stdPxPy = varP1 .^ 0.5 .* varP2 .^ 0.5; % 1 x P
     cMap = gather((covP ./ stdPxPy)');
-    cvLoss = nanmean(cMap.^2);
-    
-else
-    %compute RMSE
-    YT = bsxfun(@minus, Y, nanmean(Y,1));
-    XT = bsxfun(@minus, Vm, nanmean(Vm,1));
-
-    err = (YT - XT) .^ 2;
-    cvLoss = sqrt(mean(err(:)));
 end
 
-
-
+% Sum of squared residuals
+SSR = sum((Y - Vm).^2);
+% R squared
+TSS = sum(((Y - mean(Y)).^2));
+cvLoss = mean(1 - SSR./TSS);
