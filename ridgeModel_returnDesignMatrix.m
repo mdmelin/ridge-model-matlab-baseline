@@ -47,9 +47,8 @@ else
     vcFile = 'Vc.mat';
 end
 
-preHandleDur = floor(PRE_HANDLE_SECONDS * sRate) / sRate; % Convert to frames
-postHandleDur = floor(POST_HANDLE_SECONDS * sRate) / sRate;
-frames = round((preHandleDur + postHandleDur) * sRate); %nr of frames per trial
+
+frames = round((PRE_HANDLE_SECONDS + POST_HANDLE_SECONDS) * sRate); %nr of frames per trial
 trialDur = (frames * (1/sRate)); %duration of trial in seconds
 
 mPreTime = ceil(MOTOR_PRE_SECONDS * sRate); % conversions to frames
@@ -246,7 +245,7 @@ for iTrials = 1:trialCnt
         water(iTrials) = bhv.RawEvents.Trial{iTrials}.States.Reward(1) - stimGrab(iTrials);
     end
 end
-maxSpoutRegs = length(min(round((preHandleDur + spoutTime) * sRate)) : frames); %maximal number of required spout regressors
+maxSpoutRegs = length(min(round((PRE_HANDLE_SECONDS + spoutTime) * sRate)) : frames); %maximal number of required spout regressors
 
 %% build regressors - create design matrix based on event times
 %basic time regressors
@@ -309,12 +308,12 @@ for iTrials = 1:trialCnt
     firstStim = NaN;
     if bhv.StimType(iTrials) == 2 || bhv.StimType(iTrials) == 6 %auditory or mixed stimulus
         if ~isempty(audStimL{iTrials}(~isnan(audStimL{iTrials})))
-            firstStim = round((audStimL{iTrials}(1) + preHandleDur) * sRate);
+            firstStim = round((audStimL{iTrials}(1) + PRE_HANDLE_SECONDS) * sRate);
             stimEnd = firstStim - 1 + fsPostTime; stimEnd = min([frames stimEnd]);
             lfirstAudStimR{iTrials}(:,1 : stimEnd - firstStim + 1)  = timeR(:, firstStim : stimEnd);
         end
         if ~isempty(audStimR{iTrials}(~isnan(audStimR{iTrials})))
-            firstStim = round((audStimR{iTrials}(1) + preHandleDur) * sRate);
+            firstStim = round((audStimR{iTrials}(1) + PRE_HANDLE_SECONDS) * sRate);
             stimEnd = firstStim - 1 + fsPostTime; stimEnd = min([frames stimEnd]);
             rfirstAudStimR{iTrials}(:,1 : stimEnd - firstStim + 1) = timeR(:, firstStim : stimEnd);
         end
@@ -322,12 +321,12 @@ for iTrials = 1:trialCnt
 
     if bhv.StimType(iTrials) == 4 || bhv.StimType(iTrials) == 6 %tactile or mixed stimulus
         if ~isempty(tacStimL{iTrials}(~isnan(tacStimL{iTrials})))
-            firstStim = round((tacStimL{iTrials}(1) + preHandleDur) * sRate);
+            firstStim = round((tacStimL{iTrials}(1) + PRE_HANDLE_SECONDS) * sRate);
             stimEnd = firstStim - 1 + fsPostTime; stimEnd = min([frames stimEnd]);
             lfirstTacStimR{iTrials}(:,1 : stimEnd - firstStim + 1) = timeR(:, firstStim : stimEnd);
         end
         if ~isempty(tacStimR{iTrials}(~isnan(tacStimR{iTrials})))
-            firstStim = round((tacStimR{iTrials}(1) + preHandleDur) * sRate);
+            firstStim = round((tacStimR{iTrials}(1) + PRE_HANDLE_SECONDS) * sRate);
             stimEnd = firstStim - 1 + fsPostTime; stimEnd = min([frames stimEnd]);
             rfirstTacStimR{iTrials}(:,1 : stimEnd - firstStim + 1) = timeR(:, firstStim : stimEnd);
         end
@@ -343,29 +342,29 @@ for iTrials = 1:trialCnt
 
     for iRegs = 0 : sPostTime - 1
         allStims = audStimL{iTrials}(2:end) + (iRegs * 1/sRate);
-        lAudStimR{iTrials}(logical(histcounts(allStims,-preHandleDur:1/sRate:postHandleDur)),iRegs+1) = 1;
+        lAudStimR{iTrials}(logical(histcounts(allStims,-PRE_HANDLE_SECONDS:1/sRate:POST_HANDLE_SECONDS)),iRegs+1) = 1;
 
         allStims = audStimR{iTrials}(2:end) + (iRegs * 1/sRate);
-        rAudStimR{iTrials}(logical(histcounts(allStims,-preHandleDur:1/sRate:postHandleDur)),iRegs+1) = 1;
+        rAudStimR{iTrials}(logical(histcounts(allStims,-PRE_HANDLE_SECONDS:1/sRate:POST_HANDLE_SECONDS)),iRegs+1) = 1;
 
         allStims = tacStimL{iTrials}(2:end) + (iRegs * 1/sRate);
-        lTacStimR{iTrials}(logical(histcounts(allStims,-preHandleDur:1/sRate:postHandleDur)),iRegs+1) = 1;
+        lTacStimR{iTrials}(logical(histcounts(allStims,-PRE_HANDLE_SECONDS:1/sRate:POST_HANDLE_SECONDS)),iRegs+1) = 1;
 
         allStims = tacStimR{iTrials}(2:end) + (iRegs * 1/sRate);
-        rTacStimR{iTrials}(logical(histcounts(allStims,-preHandleDur:1/sRate:postHandleDur)),iRegs+1) = 1;
+        rTacStimR{iTrials}(logical(histcounts(allStims,-PRE_HANDLE_SECONDS:1/sRate:POST_HANDLE_SECONDS)),iRegs+1) = 1;
     end
 
 
 
     %% spout regressors
-    spoutIdx = round((preHandleDur + spoutTime(iTrials)) * sRate) : round((preHandleDur + postHandleDur) * sRate); %index for which part of the trial should be covered by spout regressors
+    spoutIdx = round((PRE_HANDLE_SECONDS + spoutTime(iTrials)) * sRate) : round((PRE_HANDLE_SECONDS + POST_HANDLE_SECONDS) * sRate); %index for which part of the trial should be covered by spout regressors
     spoutR{iTrials} = false(frames, maxSpoutRegs);
     if ~isnan(spoutTime(iTrials))
         spoutR{iTrials}(:, 1:length(spoutIdx)) = timeR(:, spoutIdx);
     end
 
     spoutOutR{iTrials} = false(frames, 3);
-    spoutOut = round((preHandleDur + spoutOutTime(iTrials)) * sRate); %time when opposing spout moved out again
+    spoutOut = round((PRE_HANDLE_SECONDS + spoutOutTime(iTrials)) * sRate); %time when opposing spout moved out again
     if ~isnan(spoutOut) && spoutOut < (frames + 1)
         cInd = spoutOut : spoutOut + 2; cInd(cInd > frames) = [];
         temp = diag(ones(1,3));
@@ -379,15 +378,15 @@ for iTrials = 1:trialCnt
 
     for iRegs = 0 : length(motorIdx)-1
         licks = lickL{iTrials} - ((mPreTime/sRate) - (iRegs * 1/sRate));
-        lLickR{iTrials}(logical(histcounts(licks,-preHandleDur:1/sRate:postHandleDur)),iRegs+1) = 1;
+        lLickR{iTrials}(logical(histcounts(licks,-PRE_HANDLE_SECONDS:1/sRate:POST_HANDLE_SECONDS)),iRegs+1) = 1;
 
         licks = lickR{iTrials} - ((mPreTime/sRate) - (iRegs * 1/sRate));
-        rLickR{iTrials}(logical(histcounts(licks,-preHandleDur:1/sRate:postHandleDur)),iRegs+1) = 1;
+        rLickR{iTrials}(logical(histcounts(licks,-PRE_HANDLE_SECONDS:1/sRate:POST_HANDLE_SECONDS)),iRegs+1) = 1;
     end
 
     %% lever in
     leverInR{iTrials} = false(frames, leverMoveDur);
-    leverShift = round((preHandleDur + leverIn(iTrials))* sRate); %timepoint in frames when lever moved in, relative to lever grab
+    leverShift = round((PRE_HANDLE_SECONDS + leverIn(iTrials))* sRate); %timepoint in frames when lever moved in, relative to lever grab
 
     if ~isnan(leverShift)
         if leverShift > 0 %lever moved in during the recorded trial
@@ -402,7 +401,7 @@ for iTrials = 1:trialCnt
     for iRegs = 0 : sPostTime - 1
         allStims = handleSounds{iTrials}(1:end) + (iRegs * 1/sRate);
         allStims = allStims(~isnan(allStims)) + 0.001;
-        handleSoundR{iTrials}(logical(histcounts(allStims,-preHandleDur:1/sRate:postHandleDur)),iRegs+1) = 1;
+        handleSoundR{iTrials}(logical(histcounts(allStims,-PRE_HANDLE_SECONDS:1/sRate:POST_HANDLE_SECONDS)),iRegs+1) = 1;
     end
 
     %% choice and reward
@@ -472,7 +471,7 @@ for iTrials = 1:trialCnt
     %determine timepoint of reward given
     waterR{iTrials} = false(frames, sRate * 2);
     if ~isnan(water(iTrials)) && ~isempty(water(iTrials))
-        waterOn = round((preHandleDur + water(iTrials)) * sRate); %timepoint in frames when reward was given
+        waterOn = round((PRE_HANDLE_SECONDS + water(iTrials)) * sRate); %timepoint in frames when reward was given
         if waterOn <= frames
             waterR{iTrials}(:, 1 : size(timeR,2) - waterOn + 1) = timeR(:, waterOn:end);
         end
@@ -480,18 +479,18 @@ for iTrials = 1:trialCnt
 
     %% lever grabs
     cGrabs = levGrabL{iTrials};
-    cGrabs(cGrabs >= postHandleDur) = []; %remove grabs after end of imaging
+    cGrabs(cGrabs >= POST_HANDLE_SECONDS) = []; %remove grabs after end of imaging
     cGrabs(find(diff(cGrabs) < TAPDUR) + 1) = []; %remove grabs that are too close to one another
-    lGrabR{iTrials} = histcounts(cGrabs,-preHandleDur:1/sRate:postHandleDur)'; %convert to binary trace
+    lGrabR{iTrials} = histcounts(cGrabs,-PRE_HANDLE_SECONDS:1/sRate:POST_HANDLE_SECONDS)'; %convert to binary trace
 
     cGrabs = levGrabR{iTrials};
-    cGrabs(cGrabs >= postHandleDur) = []; %remove grabs after end of imaging
+    cGrabs(cGrabs >= POST_HANDLE_SECONDS) = []; %remove grabs after end of imaging
     cGrabs(find(diff(cGrabs) < TAPDUR) + 1) = []; %remove grabs that are too close to one another
-    rGrabR{iTrials} = histcounts(cGrabs,-preHandleDur:1/sRate:postHandleDur)'; %convert to binary trace
+    rGrabR{iTrials} = histcounts(cGrabs,-PRE_HANDLE_SECONDS:1/sRate:POST_HANDLE_SECONDS)'; %convert to binary trace
 
     %% pupil / whisk / nose / face / body regressors
     bhvFrameRate = round(1/mean(diff(pTime{bTrials(iTrials)}))); %framerate of face camera
-    trialOn = bhv.TrialStartTime(iTrials) + (stimGrab(iTrials) - preHandleDur);
+    trialOn = bhv.TrialStartTime(iTrials) + (stimGrab(iTrials) - PRE_HANDLE_SECONDS);
     trialTime = pTime{bTrials(iTrials)} - trialOn;
     rejIdx = trialTime < trialDur; %don't use late frames
     trialTime = trialTime(rejIdx);
@@ -556,8 +555,8 @@ for iTrials = 1:trialCnt
 
     if ~isnan(stimTime(iTrials))
         try
-            Analog(1,round(stimOn + ((postHandleDur-stimTime(iTrials)) * 1000) - 1)) = 0; %make sure there are enough datapoints in analog signal
-            temp = Analog(PIEZOLINE,round(stimOn - ((preHandleDur + stimTime(iTrials)) * 1000)) : round(stimOn + ((postHandleDur - stimTime(iTrials))* 1000) - 1)); % data from piezo sensor. Should encode animals hindlimb motion.
+            Analog(1,round(stimOn + ((POST_HANDLE_SECONDS-stimTime(iTrials)) * 1000) - 1)) = 0; %make sure there are enough datapoints in analog signal
+            temp = Analog(PIEZOLINE,round(stimOn - ((PRE_HANDLE_SECONDS + stimTime(iTrials)) * 1000)) : round(stimOn + ((POST_HANDLE_SECONDS - stimTime(iTrials))* 1000) - 1)); % data from piezo sensor. Should encode animals hindlimb motion.
             temp = smooth(double(temp), sRate*5, 'lowess')'; %do some smoothing
             temp = [repmat(temp(1),1,1000) temp repmat(temp(end),1,1000)]; %add some padding on both sides to avoid edge effects when resampling
             temp = resample(double(temp), sRate, 1000); %resample to imaging rate
@@ -676,9 +675,9 @@ temp3 = NaN(frames,trialCnt,BHV_DIM_COUNT);
 temp4 = NaN(2,frames,trialCnt);
 for x = 1 : size(vidR,2) %iterate thru trials
     try
-        temp1(:,:,x) = Vc(:,(shVal - ceil(stimTime(x) / (1/sRate))) - (preHandleDur * sRate) : (shVal - ceil(stimTime(x) / (1/sRate))) + (postHandleDur * sRate) - 1,x);
-        temp2(:,x,:) = vidR((shVal - ceil(stimTime(x) / (1/sRate))) - (preHandleDur * sRate) : (shVal - ceil(stimTime(x) / (1/sRate))) + (postHandleDur * sRate) - 1,x,:);
-        temp3(:,x,:) = moveR((shVal - ceil(stimTime(x) / (1/sRate))) - (preHandleDur * sRate) : (shVal - ceil(stimTime(x) / (1/sRate))) + (postHandleDur * sRate) - 1,x,:);
+        temp1(:,:,x) = Vc(:,(shVal - ceil(stimTime(x) / (1/sRate))) - (PRE_HANDLE_SECONDS * sRate) : (shVal - ceil(stimTime(x) / (1/sRate))) + (POST_HANDLE_SECONDS * sRate) - 1,x);
+        temp2(:,x,:) = vidR((shVal - ceil(stimTime(x) / (1/sRate))) - (PRE_HANDLE_SECONDS * sRate) : (shVal - ceil(stimTime(x) / (1/sRate))) + (POST_HANDLE_SECONDS * sRate) - 1,x,:);
+        temp3(:,x,:) = moveR((shVal - ceil(stimTime(x) / (1/sRate))) - (PRE_HANDLE_SECONDS * sRate) : (shVal - ceil(stimTime(x) / (1/sRate))) + (POST_HANDLE_SECONDS * sRate) - 1,x,:);
     catch
         fprintf(1,'Could not align trial %d. Relative stim time: %fs\n', x, stimTime(x));
     end
@@ -799,8 +798,8 @@ regIdx = [
     ones(1,size(vidR,2))*find(ismember(regLabels,'bhvVideo'))];
 %% compute the indices of the event that we're aligning to - for easier recovery of kernels
 
-preStimFrames = preHandleDur*sRate;
-postStimFrames = postHandleDur*sRate;
+preStimFrames = PRE_HANDLE_SECONDS*sRate;
+postStimFrames = POST_HANDLE_SECONDS*sRate;
 
 timeZero = zeros(1,size(timeR,2)); timeZero(preStimFrames) = 1; %handle grab time
 choiceZero = zeros(1,size(ChoiceR,2)); choiceZero(preStimFrames + maxStimShift) = 1; %stim on time choice is realigned to stimulus
